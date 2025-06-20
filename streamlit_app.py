@@ -37,12 +37,14 @@ with st.sidebar:
     st.markdown("### 사용 예시 질문")
     st.markdown("- 양력과 항력이 어떻게 균형잡히나요?\n- 헬리콥터 로터 피치 변경으로 상승 원리 설명해 줘\n- 테일로터가 필요한 이유는?")
 
-# 키 없으면 안내 후 종료
+# ------------------------------------------------------------
+# 초기 화면(키 미입력) – 헬기 이미지 표시
+# ------------------------------------------------------------
 if not openai_api_key:
     st.info("사이드바에 OpenAI API 키를 입력하면 챗봇을 사용할 수 있습니다.")
     st.image(
-        "https://images.unsplash.com/photo-1602416014855-4816b4801fb4?auto=format&fit=crop&w=900&q=80",
-        caption="UH‑60 Black Hawk • © Unsplash",
+        "https://upload.wikimedia.org/wikipedia/commons/7/7e/Apache_helicopter_flying.jpg",
+        caption="AH‑64 Apache • © U.S. Army (Wikimedia Commons)",
         use_column_width=True,
     )
     st.stop()
@@ -59,26 +61,26 @@ col_img, col_chat = st.columns([1, 2])
 
 with col_img:
     st.image(
-        "https://images.unsplash.com/photo-1602416014855-4816b4801fb4?auto=format&fit=crop&w=600&q=80",
-        caption="UH‑60 Black Hawk • © Unsplash",
+        "https://upload.wikimedia.org/wikipedia/commons/7/7e/Apache_helicopter_flying.jpg",
+        caption="AH‑64 Apache • © U.S. Army (Wikimedia Commons)",
         use_column_width=True,
     )
 
 with col_chat:
     st.title("💬 Aviation Principles Chatbot")
     st.markdown(
-        "이 챗봇은 고정익·회전익 항공기의 비행 원리에 대해 전문적인 답변을 제공해요. 질문을 입력해 보세요!"
+        "이 챗봇은 고정익·회전익 항공기의 비행 원리에 대해 전문적인 답변을 제공합니다. 질문을 입력해 보세요!"
     )
 
     # --------------------------------------------------------
-    # Session -state chat history (system prompt 포함)
+    # Session‑state chat history (system prompt 포함)
     # --------------------------------------------------------
     if "messages" not in st.session_state:
         st.session_state.messages = [
             {
                 "role": "system",
                 "content": (
-                    "You are an aviation engineer and flight -science instructor. "
+                    "You are an aviation engineer and flight‑science instructor. "
                     "Explain aerodynamics, lift, drag, thrust, stability, helicopter rotor dynamics, "
                     "and related flight principles clearly, using equations and practical examples when useful. "
                     "Use Korean if the user writes in Korean."
