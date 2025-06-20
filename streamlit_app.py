@@ -10,31 +10,36 @@ import base64
 # ------------------------------------------------------------
 @st.cache_data(show_spinner=False)
 def get_helicopter_image():
-    """Get a helicopter image from Unsplash API or return a default image URL."""
-    try:
-        # Unsplash API를 통해 헬리콥터 이미지 가져오기
-        unsplash_url = "https://source.unsplash.com/400x300/?helicopter"
-        response = requests.get(unsplash_url, timeout=10)
-        
-        if response.status_code == 200:
-            # 이미지를 PIL로 처리
-            img = Image.open(BytesIO(response.content))
-            # 크기 조정
-            img = img.resize((400, 300), Image.Resampling.LANCZOS)
-            
-            # Base64로 인코딩
-            buffered = BytesIO()
-            img.save(buffered, format="JPEG", quality=85)
-            img_base64 = base64.b64encode(buffered.getvalue()).decode()
-            
-            return f"data:image/jpeg;base64,{img_base64}"
-        else:
-            # 기본 이미지 URL 반환
-            return "https://images.unsplash.com/photo-1544717302-de2939b7ef71?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
+    """Get a helicopter image from various sources."""
+    # 여러 헬리콥터 이미지 URL 목록 (확실한 헬리콥터 이미지들)
+    helicopter_urls = [
+        "https://images.unsplash.com/photo-1544717302-de2939b7ef71?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80",
+        "https://images.unsplash.com/photo-1578662996442-48f60103fc96?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80",
+        "https://images.unsplash.com/photo-1562813733-b31f71025d54?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80",
+        "https://images.unsplash.com/photo-1570710891163-6d3b5c47248b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
+    ]
     
-    except Exception as e:
-        # 오류 발생 시 기본 이미지 URL 반환
-        return "https://images.unsplash.com/photo-1544717302-de2939b7ef71?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
+    # 각 URL을 시도해서 작동하는 첫 번째 이미지 사용
+    for url in helicopter_urls:
+        try:
+            response = requests.get(url, timeout=10)
+            if response.status_code == 200:
+                # 이미지가 실제로 로드되는지 확인
+                img = Image.open(BytesIO(response.content))
+                # 크기 조정
+                img = img.resize((400, 300), Image.Resampling.LANCZOS)
+                
+                # Base64로 인코딩
+                buffered = BytesIO()
+                img.save(buffered, format="JPEG", quality=85)
+                img_base64 = base64.b64encode(buffered.getvalue()).decode()
+                
+                return f"data:image/jpeg;base64,{img_base64}"
+        except Exception:
+            continue
+    
+    # 모든 URL이 실패하면 직접 헬리콥터 이미지 URL 반환
+    return "https://images.unsplash.com/photo-1544717302-de2939b7ef71?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&h=300&q=80"
 
 # ------------------------------------------------------------
 # Page configuration & global style
