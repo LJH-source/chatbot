@@ -38,8 +38,11 @@ if not openai_api_key:
     st.info("사이드바에 OpenAI API 키를 입력하면 챗봇을 사용할 수 있습니다.")
 
     # ✅ 여기에 사용자가 직접 넣은 이미지를 표시합니다.
-    # 예: 프로젝트 폴더에 'helicopter.jpg' 파일이 있다고 가정
-    st.image("helicopter.jpg", caption="직접 넣은 헬기 이미지", use_column_width=True)
+    # 프로젝트 폴더에 'helicopter.jpg' 파일이 있어야 합니다.
+    try:
+        st.image("helicopter.jpg", caption="🚁 헬리콥터 원리 이해를 위한 이미지", use_column_width=True)
+    except FileNotFoundError:
+        st.warning("⚠️ 'helicopter.jpg' 파일이 프로젝트 폴더에 없습니다. 이미지를 확인해 주세요.")
 
     st.stop()
 
@@ -49,13 +52,15 @@ if not openai_api_key:
 client = OpenAI(api_key=openai_api_key)
 
 # ------------------------------------------------------------
-# 컬럼 레이아웃: 왼쪽 사용자 이미지, 오른쪽 챗
+# 컬럼 레이아웃: 왼쪽 이미지, 오른쪽 챗
 # ------------------------------------------------------------
 col_img, col_chat = st.columns([1, 2])
 
 with col_img:
-    # ✅ 이 부분에도 사용자 이미지가 표시됩니다.
-    st.image("helicopter.jpg", caption="직접 넣은 헬기 이미지", use_column_width=True)
+    try:
+        st.image("helicopter.jpg", caption="🚁 헬리콥터 로터 시스템 이미지", use_column_width=True)
+    except FileNotFoundError:
+        st.warning("⚠️ 이미지 파일을 찾을 수 없습니다.")
 
 with col_chat:
     st.title("💬 Aviation Principles Chatbot")
