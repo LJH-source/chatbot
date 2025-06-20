@@ -40,6 +40,11 @@ with st.sidebar:
 # 키 없으면 안내 후 종료
 if not openai_api_key:
     st.info("사이드바에 OpenAI API 키를 입력하면 챗봇을 사용할 수 있습니다.")
+    st.image(
+        "https://images.unsplash.com/photo-1602416014855-4816b4801fb4?auto=format&fit=crop&w=900&q=80",
+        caption="UH‑60 Black Hawk • © Unsplash",
+        use_column_width=True,
+    )
     st.stop()
 
 # ------------------------------------------------------------
@@ -55,7 +60,7 @@ col_img, col_chat = st.columns([1, 2])
 with col_img:
     st.image(
         "https://images.unsplash.com/photo-1602416014855-4816b4801fb4?auto=format&fit=crop&w=600&q=80",
-        caption="UH‑60 Black Hawk • © Unsplash",
+        caption="UH‑60 Black Hawk • © Unsplash",
         use_column_width=True,
     )
 
