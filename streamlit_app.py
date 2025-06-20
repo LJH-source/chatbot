@@ -3,6 +3,7 @@ from openai import OpenAI
 from io import BytesIO
 from PIL import Image, ImageDraw
 import base64
+import math
 
 # ------------------------------------------------------------
 # Utility – create a simple helicopter rotor GIF (generated on‑the‑fly)
@@ -29,9 +30,10 @@ def create_helicopter_gif(size: int = 200, frames: int = 12):
         ], fill=(80, 80, 80, 255))
 
         # Draw two rotor blades (rotated)
+        angle_rad = math.radians(angle)
         for sign in (1, -1):
-            x2 = center + blade_len * sign * ImageDraw.math.cos(angle * 3.14159 / 180)
-            y2 = center + blade_len * sign * ImageDraw.math.sin(angle * 3.14159 / 180)
+            x2 = center + blade_len * sign * math.cos(angle_rad)
+            y2 = center + blade_len * sign * math.sin(angle_rad)
             d.line([(center, center), (x2, y2)], fill=(20, 20, 20, 255), width=6)
         imgs.append(img)
 
