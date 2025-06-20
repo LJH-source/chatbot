@@ -2,39 +2,44 @@ import streamlit as st
 from openai import OpenAI
 
 # ------------------------------------------------------------
-# Page configuration & header
+# Page configuration & global style
 # ------------------------------------------------------------
-st.set_page_config(page_title="🛩️ Aviation Principles Chatbot", page_icon="✈️", layout="centered")
+st.set_page_config(
+    page_title="✈️ Aviation Principles Chatbot",
+    page_icon="🛩️",
+    layout="wide",
+)
 
-st.title("💬 Aviation Principles Chatbot")
-
+# 기본 CSS 살짝 조정 (배경색, 본문 폭 등)
 st.markdown(
     """
-이 챗봇은 항공기(특히 고정익·회전익)의 **비행 원리**와 **항공역학**에 대한 전문 답변을 제공합니다.  
-OpenAI GPT‑4o 모델을 사용하며, 질문은 한국어·영어 모두 가능합니다.
-"""
+    <style>
+        .main {
+            background-color: #f0f4f8;
+        }
+        .block-container {
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        footer {visibility: hidden;}
+    </style>
+    """,
+    unsafe_allow_html=True,
 )
 
 # ------------------------------------------------------------
-# Sidebar – API key & helper image
+# Sidebar – API key & 도움말
 # ------------------------------------------------------------
 with st.sidebar:
-    st.image(
-        "https://images.unsplash.com/photo-1516569420820-527ea139c2b7?auto=format&fit=crop&w=600&q=60",
-        caption="Bell 412 helicopter • © Alex Loup – Unsplash",
-        use_column_width=True,
-    )
-    st.markdown("### 사용 방법")
-    st.markdown("""
-- 좌측 입력란에 **OpenAI API 키**를 입력하세요.  
-- 예시 질문:  
-  • `양력과 항력은 어떻게 균형잡히나요?`  
-  • `헬리콥터 로터는 왜 피치 변경으로 상승하나요?`
-""")
+    st.header("🔑 API Key 설정")
+    openai_api_key = st.text_input("OpenAI API Key", type="password")
+    st.divider()
+    st.markdown("### 사용 예시 질문")
+    st.markdown("- 양력과 항력이 어떻게 균형잡히나요?\n- 헬리콥터 로터 피치 변경으로 상승 원리 설명해 줘\n- 테일로터가 필요한 이유는?")
 
-openai_api_key = st.sidebar.text_input("🔑 OpenAI API Key", type="password")
+# 키 없으면 안내 후 종료
 if not openai_api_key:
-    st.info("API 키를 입력하면 대화를 시작할 수 있습니다.", icon="🗝️")
+    st.info("사이드바에 OpenAI API 키를 입력하면 챗봇을 사용할 수 있습니다.")
     st.stop()
 
 # ------------------------------------------------------------
@@ -43,54 +48,68 @@ if not openai_api_key:
 client = OpenAI(api_key=openai_api_key)
 
 # ------------------------------------------------------------
-# Session‑state chat history (include system prompt for domain focus)
+# 컬럼 레이아웃: 왼쪽 그림, 오른쪽 챗
 # ------------------------------------------------------------
-if "messages" not in st.session_state:
-    st.session_state.messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are an aviation engineer and flight‑science instructor. "
-                "Explain concepts of aerodynamics, lift, drag, thrust, stability, helicopter rotor dynamics, "
-                "and other flight principles with clear examples and equations when helpful. "
-                "Keep answers concise but thorough, and switch to Korean when the user writes in Korean."
-            ),
-        }
-    ]
+col_img, col_chat = st.columns([1, 2])
 
-# ------------------------------------------------------------
-# Render existing messages (excluding hidden system message)
-# ------------------------------------------------------------
-for message in st.session_state.messages:
-    if message["role"] != "system":
-        with st.chat_message(message["role"]):
-            st.markdown(message["content"])
+with col_img:
+    st.image(
+        "https://images.unsplash.com/photo-1602416014855-4816b4801fb4?auto=format&fit=crop&w=600&q=80",
+        caption="UH‑60 Black Hawk • © Unsplash",
+        use_column_width=True,
+    )
 
-# ------------------------------------------------------------
-# User input field
-# ------------------------------------------------------------
-if prompt := st.chat_input("✍️ 궁금한 비행 원리를 입력하세요..."):
+with col_chat:
+    st.title("💬 Aviation Principles Chatbot")
+    st.markdown(
+        "이 챗봇은 고정익·회전익 항공기의 비행 원리에 대해 전문적인 답변을 제공해요. 질문을 입력해 보세요!"
+    )
 
-    # Store & echo the user prompt
-    st.session_state.messages.append({"role": "user", "content": prompt})
-    with st.chat_message("user"):
-        st.markdown(prompt)
+    # --------------------------------------------------------
+    # Session -state chat history (system prompt 포함)
+    # --------------------------------------------------------
+    if "messages" not in st.session_state:
+        st.session_state.messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are an aviation engineer and flight -science instructor. "
+                    "Explain aerodynamics, lift, drag, thrust, stability, helicopter rotor dynamics, "
+                    "and related flight principles clearly, using equations and practical examples when useful. "
+                    "Use Korean if the user writes in Korean."
+                ),
+            }
+        ]
 
-    # Request streaming completion from OpenAI
-    try:
-        stream = client.chat.completions.create(
-            model="gpt-4o",
-            messages=st.session_state.messages,
-            temperature=0.7,
-            top_p=0.9,
-            stream=True,
-        )
+    # 기존 메시지 표시 (system 제외)
+    for msg in st.session_state.messages:
+        if msg["role"] != "system":
+            with st.chat_message(msg["role"]):
+                st.markdown(msg["content"])
 
-        # Display assistant response as it streams
-        with st.chat_message("assistant"):
-            response_content = st.write_stream(stream)
+    # --------------------------------------------------------
+    # User input
+    # --------------------------------------------------------
+    if prompt := st.chat_input("✍️ 궁금한 비행 원리를 입력하세요..."):
 
-        # Save assistant response to chat history
-        st.session_state.messages.append({"role": "assistant", "content": response_content})
-    except Exception as e:
-        st.error(f"🚨 Error: {e}")
+        # 저장 & 화면 표시
+        st.session_state.messages.append({"role": "user", "content": prompt})
+        with st.chat_message("user"):
+            st.markdown(prompt)
+
+        # OpenAI 스트리밍 응답
+        try:
+            stream = client.chat.completions.create(
+                model="gpt-4o",
+                messages=st.session_state.messages,
+                temperature=0.7,
+                top_p=0.9,
+                stream=True,
+            )
+
+            with st.chat_message("assistant"):
+                response_text = st.write_stream(stream)
+
+            st.session_state.messages.append({"role": "assistant", "content": response_text})
+        except Exception as e:
+            st.error(f"🚨 Error: {e}")
