@@ -40,7 +40,7 @@ if not openai_api_key:
     # ✅ 여기에 사용자가 직접 넣은 이미지를 표시합니다.
     # 프로젝트 폴더에 'helicopter.jpg' 파일이 있어야 합니다.
     try:
-        st.image("helicopter.png", caption="🚁 헬리콥터 원리의 이해", use_column_width=True)
+        st.image("helicopter.png", caption="🚁 헬리콥터 원리의 이해", use_container_width=True)
     except FileNotFoundError:
         st.warning("⚠️ 'helicopter.png' 파일이 프로젝트 폴더에 없습니다. 이미지를 확인해 주세요.")
 
@@ -58,7 +58,7 @@ col_img, col_chat = st.columns([1, 2])
 
 with col_img:
     try:
-        st.image("helicopter.png", caption="🚁 헬리콥터 로터 시스템", use_column_width=True)
+        st.image("helicopter.png", caption="🚁 헬리콥터 로터 시스템", use_container_width=True)
     except FileNotFoundError:
         st.warning("⚠️ 이미지 파일을 찾을 수 없습니다.")
 
