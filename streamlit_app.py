@@ -1,5 +1,48 @@
 import streamlit as st
 from openai import OpenAI
+from io import BytesIO
+from PIL import Image, ImageDraw
+import base64
+
+# ------------------------------------------------------------
+# Utility – create a simple helicopter rotor GIF (generated on‑the‑fly)
+# ------------------------------------------------------------
+@st.cache_resource(show_spinner=False)
+def create_helicopter_gif(size: int = 200, frames: int = 12):
+    """Return base64‑encoded GIF bytes of a minimal helicopter top‑view animation."""
+    imgs = []
+    center = size // 2
+    blade_len = int(size * 0.35)
+    body_len = int(size * 0.25)
+
+    for i in range(frames):
+        angle = i * (360 / frames)
+        img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
+        d = ImageDraw.Draw(img)
+
+        # Draw simple fuselage (rectangle)
+        fus_w = body_len // 3
+        fus_h = body_len
+        d.rectangle([
+            (center - fus_w // 2, center - fus_h // 2),
+            (center + fus_w // 2, center + fus_h // 2)
+        ], fill=(80, 80, 80, 255))
+
+        # Draw two rotor blades (rotated)
+        for sign in (1, -1):
+            x2 = center + blade_len * sign * ImageDraw.math.cos(angle * 3.14159 / 180)
+            y2 = center + blade_len * sign * ImageDraw.math.sin(angle * 3.14159 / 180)
+            d.line([(center, center), (x2, y2)], fill=(20, 20, 20, 255), width=6)
+        imgs.append(img)
+
+    # Save to GIF in memory
+    buf = BytesIO()
+    imgs[0].save(buf, format="GIF", save_all=True, append_images=imgs[1:], loop=0, duration=80, disposal=2)
+    gif_b64 = base64.b64encode(buf.getvalue()).decode()
+    return gif_b64
+
+GIF_DATA = create_helicopter_gif()
+GIF_TAG = f'<img src="data:image/gif;base64,{GIF_DATA}" width="100%">'
 
 # ------------------------------------------------------------
 # Page configuration & global style
@@ -10,17 +53,11 @@ st.set_page_config(
     layout="wide",
 )
 
-# 기본 CSS 살짝 조정 (배경색, 본문 폭 등)
 st.markdown(
     """
     <style>
-        .main {
-            background-color: #f0f4f8;
-        }
-        .block-container {
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-        }
+        .main {background-color: #f0f4f8;}
+        .block-container {padding-top: 2rem; padding-bottom: 2rem;}
         footer {visibility: hidden;}
     </style>
     """,
@@ -38,15 +75,11 @@ with st.sidebar:
     st.markdown("- 양력과 항력이 어떻게 균형잡히나요?\n- 헬리콥터 로터 피치 변경으로 상승 원리 설명해 줘\n- 테일로터가 필요한 이유는?")
 
 # ------------------------------------------------------------
-# 초기 화면(키 미입력) – 헬기 이미지 표시
+# 초기 화면(키 미입력) – 애니메이션 GIF 표시
 # ------------------------------------------------------------
 if not openai_api_key:
     st.info("사이드바에 OpenAI API 키를 입력하면 챗봇을 사용할 수 있습니다.")
-    st.image(
-        "https://upload.wikimedia.org/wikipedia/commons/7/7e/Apache_helicopter_flying.jpg",
-        caption="AH‑64 Apache • © U.S. Army (Wikimedia Commons)",
-        use_column_width=True,
-    )
+    st.markdown(GIF_TAG, unsafe_allow_html=True)
     st.stop()
 
 # ------------------------------------------------------------
@@ -55,16 +88,12 @@ if not openai_api_key:
 client = OpenAI(api_key=openai_api_key)
 
 # ------------------------------------------------------------
-# 컬럼 레이아웃: 왼쪽 그림, 오른쪽 챗
+# 컬럼 레이아웃: 왼쪽 애니메이션, 오른쪽 챗
 # ------------------------------------------------------------
 col_img, col_chat = st.columns([1, 2])
 
 with col_img:
-    st.image(
-        "https://upload.wikimedia.org/wikipedia/commons/7/7e/Apache_helicopter_flying.jpg",
-        caption="AH‑64 Apache • © U.S. Army (Wikimedia Commons)",
-        use_column_width=True,
-    )
+    st.markdown(GIF_TAG, unsafe_allow_html=True)
 
 with col_chat:
     st.title("💬 Aviation Principles Chatbot")
@@ -99,12 +128,10 @@ with col_chat:
     # --------------------------------------------------------
     if prompt := st.chat_input("✍️ 궁금한 비행 원리를 입력하세요..."):
 
-        # 저장 & 화면 표시
         st.session_state.messages.append({"role": "user", "content": prompt})
         with st.chat_message("user"):
             st.markdown(prompt)
 
-        # OpenAI 스트리밍 응답
         try:
             stream = client.chat.completions.create(
                 model="gpt-4o",
