@@ -1,48 +1,5 @@
 import streamlit as st
 from openai import OpenAI
-from io import BytesIO
-from PIL import Image, ImageDraw
-import base64
-
-# ------------------------------------------------------------
-# Utility – create a simple helicopter rotor GIF (generated on‑the‑fly)
-# ------------------------------------------------------------
-@st.cache_resource(show_spinner=False)
-def create_helicopter_gif(size: int = 200, frames: int = 12):
-    """Return base64‑encoded GIF bytes of a minimal helicopter top‑view animation."""
-    imgs = []
-    center = size // 2
-    blade_len = int(size * 0.35)
-    body_len = int(size * 0.25)
-
-    for i in range(frames):
-        angle = i * (360 / frames)
-        img = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-        d = ImageDraw.Draw(img)
-
-        # Draw simple fuselage (rectangle)
-        fus_w = body_len // 3
-        fus_h = body_len
-        d.rectangle([
-            (center - fus_w // 2, center - fus_h // 2),
-            (center + fus_w // 2, center + fus_h // 2)
-        ], fill=(80, 80, 80, 255))
-
-        # Draw two rotor blades (rotated)
-        for sign in (1, -1):
-            x2 = center + blade_len * sign * ImageDraw.math.cos(angle * 3.14159 / 180)
-            y2 = center + blade_len * sign * ImageDraw.math.sin(angle * 3.14159 / 180)
-            d.line([(center, center), (x2, y2)], fill=(20, 20, 20, 255), width=6)
-        imgs.append(img)
-
-    # Save to GIF in memory
-    buf = BytesIO()
-    imgs[0].save(buf, format="GIF", save_all=True, append_images=imgs[1:], loop=0, duration=80, disposal=2)
-    gif_b64 = base64.b64encode(buf.getvalue()).decode()
-    return gif_b64
-
-GIF_DATA = create_helicopter_gif()
-GIF_TAG = f'<img src="data:image/gif;base64,{GIF_DATA}" width="100%">'
 
 # ------------------------------------------------------------
 # Page configuration & global style
@@ -75,11 +32,15 @@ with st.sidebar:
     st.markdown("- 양력과 항력이 어떻게 균형잡히나요?\n- 헬리콥터 로터 피치 변경으로 상승 원리 설명해 줘\n- 테일로터가 필요한 이유는?")
 
 # ------------------------------------------------------------
-# 초기 화면(키 미입력) – 애니메이션 GIF 표시
+# 초기 화면(키 미입력) – 사용자 이미지 표시 가능 영역
 # ------------------------------------------------------------
 if not openai_api_key:
     st.info("사이드바에 OpenAI API 키를 입력하면 챗봇을 사용할 수 있습니다.")
-    st.markdown(GIF_TAG, unsafe_allow_html=True)
+
+    # ✅ 여기에 사용자가 직접 넣은 이미지를 표시합니다.
+    # 예: 프로젝트 폴더에 'helicopter.jpg' 파일이 있다고 가정
+    st.image("helicopter.jpg", caption="직접 넣은 헬기 이미지", use_column_width=True)
+
     st.stop()
 
 # ------------------------------------------------------------
@@ -88,12 +49,13 @@ if not openai_api_key:
 client = OpenAI(api_key=openai_api_key)
 
 # ------------------------------------------------------------
-# 컬럼 레이아웃: 왼쪽 애니메이션, 오른쪽 챗
+# 컬럼 레이아웃: 왼쪽 사용자 이미지, 오른쪽 챗
 # ------------------------------------------------------------
 col_img, col_chat = st.columns([1, 2])
 
 with col_img:
-    st.markdown(GIF_TAG, unsafe_allow_html=True)
+    # ✅ 이 부분에도 사용자 이미지가 표시됩니다.
+    st.image("helicopter.jpg", caption="직접 넣은 헬기 이미지", use_column_width=True)
 
 with col_chat:
     st.title("💬 Aviation Principles Chatbot")
